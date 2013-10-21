@@ -11,11 +11,16 @@ namespace Quine_McCluskey
         #region Fields
 
         private List<MintermGroup> _mintermGroups = new List<MintermGroup>();
+        private List<Minterm> _primeImplicants;
 
         #endregion
 
         #region Methods
 
+        /// <summary>
+        /// Adds the specified minterm to the collection.
+        /// </summary>
+        /// <param name="minterm">The minterm.</param>
         public void Add(Minterm minterm)
         {
             MintermGroup selectedGroup = _mintermGroups.FirstOrDefault(group => group.NumberOfOnes == minterm.NumberOfOnes);
@@ -28,13 +33,32 @@ namespace Quine_McCluskey
             selectedGroup.Add(minterm);
         }
 
+        /// <summary>
+        /// Adds the specified group to the collection.
+        /// </summary>
+        /// <param name="group">The group.</param>
         public void Add(MintermGroup group)
         {
             // todo: check if group with same number of ones already exists and merge if nessesary
             _mintermGroups.Add(group);
         }
 
-        public MintermCollection Combine()
+        /// <summary>
+        /// Gets the prime implicants.
+        /// </summary>
+        /// <returns>The prime implicants</returns>
+        public IEnumerable<Minterm> GetPrimeImplicants()
+        {
+            if (_primeImplicants == null)
+            {
+                _primeImplicants = new List<Minterm>();
+                Combine(_primeImplicants);
+            }
+
+            return _primeImplicants;
+        }
+
+        private void Combine(IList<Minterm> primeImplicants)
         {
             var newCollection = new MintermCollection();
             bool wasCombined = false;
@@ -47,9 +71,17 @@ namespace Quine_McCluskey
                     newCollection.Add(newGroup);
                     wasCombined = true;
                 }
+
+                foreach (var minterm in _mintermGroups[i].Minterms.Where(item => !item.WasCombined))
+                    primeImplicants.Add(minterm);
             }
 
-            return wasCombined ? newCollection.Combine() : this;
+            // the last group
+            foreach (var minterm in _mintermGroups[_mintermGroups.Count - 1].Minterms.Where(item => !item.WasCombined))
+                primeImplicants.Add(minterm);
+
+            if (wasCombined)
+                newCollection.Combine(primeImplicants);
         }
 
         #endregion

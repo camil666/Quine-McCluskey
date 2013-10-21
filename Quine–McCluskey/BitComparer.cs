@@ -10,7 +10,13 @@ namespace Quine_McCluskey
     {
         #region methods
 
-        public static bool Compare(bool?[] array1, bool?[] array2)
+        /// <summary>
+        /// Compares the specified arrays of bits.
+        /// </summary>
+        /// <param name="array1">The first array.</param>
+        /// <param name="array2">The second array.</param>
+        ///   <returns><c>true</c> if arrays are equal; otherwise, <c>false</c>.</returns>
+        public static bool Equals(bool?[] array1, bool?[] array2)
         {
             if (array1.Length != array2.Length)
                 return false;

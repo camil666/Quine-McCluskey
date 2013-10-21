@@ -17,7 +17,21 @@ namespace Quine_McCluskey
 
         #region Properties
 
+        /// <summary>
+        /// Gets the binary representation of the minterm.
+        /// </summary>
+        /// <value>
+        /// The binary representation of the minterm.
+        /// </value>
         public bool?[] Binary { get; private set; }
+
+        /// <summary>
+        /// Gets a value indicating whether this minterm was combined with another minterm.
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if minterm was combined; otherwise, <c>false</c>.
+        /// </value>
+        public bool WasCombined { get; private set; }
 
         public int NumberOfOnes
         {
@@ -34,6 +48,11 @@ namespace Quine_McCluskey
 
         #region Constructors
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Minterm"/> class.
+        /// </summary>
+        /// <param name="numeral">The numeral reprezentation.</param>
+        /// <param name="numberOfBits">The number of bits needed in binary representation.</param>
         public Minterm(int numeral, int numberOfBits)
         {
             var bitArray = new BitArray(new[] { numeral });
@@ -52,6 +71,11 @@ namespace Quine_McCluskey
 
         #region Methods
 
+        /// <summary>
+        /// Combines the specified minterm with another minterm.
+        /// </summary>
+        /// <param name="minterm">The minterm.</param>
+        /// <returns>Combined minterm.</returns>
         public Minterm Combine(Minterm minterm)
         {
             var array = new bool?[Binary.Length];
@@ -72,6 +96,9 @@ namespace Quine_McCluskey
                 if (mismatchCount > 1)
                     return null;
             }
+
+            WasCombined = true;
+            minterm.WasCombined = true;
 
             return new Minterm(array);
         }
