@@ -25,6 +25,8 @@ namespace Quine_McCluskey
         /// </value>
         public bool?[] Binary { get; private set; }
 
+        public ICollection<Numeral> Numerals { get; private set; }
+
         /// <summary>
         /// Gets a value indicating whether this minterm was combined with another minterm.
         /// </summary>
@@ -53,9 +55,11 @@ namespace Quine_McCluskey
         /// </summary>
         /// <param name="numeral">The numeral reprezentation.</param>
         /// <param name="numberOfBits">The number of bits needed in binary representation.</param>
-        public Minterm(int numeral, int numberOfBits)
+        public Minterm(Numeral numeral, int numberOfBits)
         {
-            var bitArray = new BitArray(new[] { numeral });
+            Numerals = new List<Numeral>();
+            Numerals.Add(numeral);
+            var bitArray = new BitArray(new[] { numeral.Number });
             Binary = new bool?[numberOfBits];
 
             for (int i = 0; i < numberOfBits; ++i)
@@ -64,6 +68,7 @@ namespace Quine_McCluskey
 
         private Minterm(bool?[] bits)
         {
+            Numerals = new List<Numeral>();
             Binary = bits;
         }
 
@@ -100,7 +105,18 @@ namespace Quine_McCluskey
             WasCombined = true;
             minterm.WasCombined = true;
 
-            return new Minterm(array);
+            var newMinterm = new Minterm(array);
+
+            foreach (Numeral numeral in Numerals)
+                newMinterm.Numerals.Add(numeral);
+
+            foreach (Numeral numeral in minterm.Numerals)
+            {
+                if (!newMinterm.Numerals.Contains(numeral))
+                    newMinterm.Numerals.Add(numeral);
+            }
+
+            return newMinterm;
         }
 
         #endregion

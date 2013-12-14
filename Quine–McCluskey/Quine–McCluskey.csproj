@@ -55,6 +55,8 @@
     <Compile Include="Minterm.cs" />
     <Compile Include="MintermCollection.cs" />
     <Compile Include="MintermGroup.cs" />
+    <Compile Include="MintermTable.cs" />
+    <Compile Include="Numeral.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Main.resx">
