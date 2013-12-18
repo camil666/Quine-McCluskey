@@ -22,11 +22,11 @@ namespace Quine_McCluskey
             //var numbers = new int[] { 0, 1, 2, 4, 6, 11, 12 };
             //var fis = new int[] { 3, 9 };
 
-            var numbers = new int[] { 0, 4, 5, 6, 11, 15 };
-            var fis = new int[] { 2, 7, 9, 12 };
+            //var numbers = new int[] { 0, 4, 5, 6, 11, 15 };
+            //var fis = new int[] { 2, 7, 9, 12 };
 
-            //var numbers = new int[] { 0, 1, 2, 4, 9, 12, 13, 19, 24, 27 };
-            //var fis = new int[] { 3, 6, 10, 11, 14, 18, 23, 26, 31 };
+            var numbers = new int[] { 0, 1, 2, 4, 9, 12, 13, 19, 24, 27 };
+            var fis = new int[] { 3, 6, 10, 11, 14, 18, 23, 26, 31 };
 
             var allNumbers = numbers.Concat(fis);
 

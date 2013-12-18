@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Quine_McCluskey
 {
@@ -10,9 +7,9 @@ namespace Quine_McCluskey
     {
         #region Fields
 
-        List<int> _numerals = new List<int>();
-        List<Minterm> _primeImplicants = new List<Minterm>();
-        List<List<bool>> _table;
+        private List<int> _numerals = new List<int>();
+        private List<Minterm> _primeImplicants = new List<Minterm>();
+        private List<List<bool>> _table;
 
         #endregion
 
@@ -38,7 +35,24 @@ namespace Quine_McCluskey
 
         #region Methods
 
-        private int GetColumnCoverage(int index)
+        private double GetS(int index)
+        {
+            double result = 0;
+            for (int columnIndex = 0; columnIndex < _numerals.Count; ++columnIndex)
+            {
+                if (_table[index][columnIndex])
+                    result += 1.0 / GetP(columnIndex);
+            }
+
+            return result;
+        }
+
+        private int GetSBis(int index)
+        {
+            return _primeImplicants[index].Numerals.Count();
+        }
+
+        private int GetP(int index)
         {
             int result = 0;
             for (int i = 0; i < _table.Count(); ++i)
@@ -47,14 +61,6 @@ namespace Quine_McCluskey
             }
 
             return result;
-        }
-
-        private void RemoveColumn(int index)
-        {
-            for (int i = 0; i < _table.Count(); ++i)
-                _table[i].RemoveAt(index);
-
-            _numerals.RemoveAt(index);
         }
 
         private void RemoveColumnWithValue(int value)
@@ -79,13 +85,16 @@ namespace Quine_McCluskey
         {
             for (int columnIndex = 0; columnIndex < _numerals.Count; ++columnIndex)
             {
-                if (GetColumnCoverage(columnIndex) == 1)
+                if (GetP(columnIndex) == 1)
                 {
-                    Minterm selectedMinterm = _primeImplicants
-                        .Where(item => item.Numerals.Where(numeral => numeral.Number == _numerals[columnIndex]).Count() > 0).FirstOrDefault();
+                    List<bool> column = _table.Select(item => item[columnIndex]).ToList();
+
+                    Minterm selectedMinterm = _primeImplicants[column.IndexOf(true)];
 
                     foreach (var numeral in selectedMinterm.Numerals)
                         RemoveColumnWithValue(numeral.Number);
+
+                    RemoveRow(_primeImplicants.IndexOf(selectedMinterm));
 
                     //zaczynamy od nowa
                     columnIndex = -1;
@@ -95,101 +104,95 @@ namespace Quine_McCluskey
             }
         }
 
-        private int ReduceRows()
+        private void DeleteWorstRow()
         {
-            int rowsReduced = 0;
-
-            for (int rowIndex = 0; rowIndex < _primeImplicants.Count; ++rowIndex) //remove empty rows
+            var columnIndexes = new List<int>();
+            int pMinimum = int.MaxValue;
+            for (int columnIndex = 0; columnIndex < _numerals.Count(); ++columnIndex)
             {
-                if (_table[rowIndex].All(item => !item))    //if row is empty
+                int p = GetP(columnIndex);
+                if (p < pMinimum)
                 {
-                    RemoveRow(rowIndex);
-                    rowIndex = rowIndex == 0 ? 0 : rowIndex - 1;
-                    ++rowsReduced;
+                    pMinimum = p;
+                    columnIndexes.Clear();
+                    columnIndexes.Add(columnIndex);
+                }
+                else if (p == pMinimum)
+                {
+                    columnIndexes.Add(columnIndex);
                 }
             }
 
-            for (int rowIndex = 0; rowIndex < _primeImplicants.Count; ++rowIndex) //remove same rows
+            double sMinimum = double.MaxValue;
+            var rowIndexes = new List<int>();
+            for (int rowIndex = 0; rowIndex < _primeImplicants.Count(); ++rowIndex)
             {
-                for (int rowToCheckIndex = 0; rowToCheckIndex < _primeImplicants.Count; ++rowToCheckIndex)
+                for (int columnIndex = 0; columnIndex < _numerals.Count(); ++columnIndex)
                 {
-                    if (rowIndex == rowToCheckIndex)
-                        continue;
-
-                    bool rowCanBeDeleted = true;
-
-                    for (int bitIndex = 0; bitIndex < _numerals.Count; ++bitIndex)
+                    if (columnIndexes.Contains(columnIndex) && _table[rowIndex][columnIndex])
                     {
-                        if (!_table[rowIndex][bitIndex] && _table[rowIndex][bitIndex] != _table[rowToCheckIndex][bitIndex])
+                        double s = GetS(rowIndex);
+                        if (s < sMinimum)
                         {
-                            rowCanBeDeleted = false;
+                            sMinimum = s;
+                            rowIndexes.Clear();
+                            rowIndexes.Add(rowIndex);
                         }
-                    }
+                        else if (s == sMinimum)
+                        {
+                            rowIndexes.Add(rowIndex);
+                        }
 
-                    if (rowCanBeDeleted)
-                    {
-                        RemoveRow(rowToCheckIndex);
-                        rowIndex = rowIndex == 0 ? 0 : rowIndex - 1;
-                        rowToCheckIndex = rowToCheckIndex == 0 ? 0 : rowToCheckIndex - 1;
-                        ++rowsReduced;
+                        break;
                     }
                 }
             }
 
-            return rowsReduced;
+            if (rowIndexes.Count > 1)
+            {
+                var rowBisIndexes = new List<int>();
+                int sBisMinimum = int.MaxValue;
+                for (int rowIndex = 0; rowIndex < _primeImplicants.Count(); ++rowIndex)
+                {
+                    if (rowIndexes.Contains(rowIndex))
+                    {
+                        int sBis = GetSBis(rowIndex);
+                        if (sBis < sBisMinimum)
+                        {
+                            sBisMinimum = sBis;
+                            rowBisIndexes.Clear();
+                            rowBisIndexes.Add(rowIndex);
+                        }
+                        else if (sBis == sBisMinimum)
+                        {
+                            rowBisIndexes.Add(rowIndex);
+                        }
+
+                        break;
+                    }
+                }
+
+                RemoveRow(rowBisIndexes.First());
+                return;
+            }
+
+            RemoveRow(rowIndexes.First());
         }
 
-        private int ReduceColumns()
-        {
-            int columnsReduced = 0;
-
-            for (int columnIndex = 0; columnIndex < _numerals.Count; ++columnIndex)
-            {
-                List<bool> column = _table.Select(item => item[columnIndex]).ToList();
-
-                for (int columnToCheckIndex = 0; columnToCheckIndex < _numerals.Count; ++columnToCheckIndex)
-                {
-                    if (columnIndex == columnToCheckIndex)
-                        continue;
-
-                    bool columnCanBeDeleted = true;
-
-                    List<bool> columnToCheck = _table.Select(item => item[columnToCheckIndex]).ToList();
-
-                    for (int bitIndex = 0; bitIndex < _primeImplicants.Count; ++bitIndex)
-                    {
-                        if (!column[bitIndex] && column[bitIndex] != columnToCheck[bitIndex])
-                        {
-                            columnCanBeDeleted = false;
-                        }
-                    }
-
-                    if (columnCanBeDeleted)
-                    {
-                        RemoveColumn(columnToCheckIndex);
-                        ++columnsReduced;
-                        columnIndex = columnIndex == 0 ? 0 : columnIndex - 1;
-                        columnToCheckIndex = columnToCheckIndex == 0 ? 0 : columnToCheckIndex - 1;
-                    }
-                }
-            }
-
-            return columnsReduced;
-        }
-
+        /// <summary>
+        /// Reduces minterms.
+        /// </summary>
+        /// <returns>The result of the reduction.</returns>
         public IEnumerable<Minterm> Reduce()
         {
             var results = new List<Minterm>();
 
-            int rowsReduced = 0;
-            int columnsReduced = 0;
-
             do
             {
                 results.AddRange(RemoveEmptyColumns());
-                rowsReduced = ReduceRows();
-                columnsReduced = ReduceColumns();
-            } while (rowsReduced != 0 || columnsReduced != 0);
+                if (_numerals.Any())
+                    DeleteWorstRow();
+            } while (_numerals.Any());
 
 
             return results;
